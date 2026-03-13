@@ -1,83 +1,57 @@
 "use client";
 import { useState } from "react";
 
-// Mini knowledge base to simulate RAG
 const knowledgeBase = [
   { keyword: "password", reason: "Passwords should never be shared." },
   { keyword: "api key", reason: "API keys are sensitive." },
   { keyword: "salary", reason: "Employee salary info is confidential." },
   { keyword: "database", reason: "Company databases may contain private info." },
-  { keyword: "internal", reason: "Internal company info should not be shared externally." },
-  { keyword: "secret", reason: "This is confidential information." },
 ];
 
 export default function Home() {
   const [tool, setTool] = useState("");
   const [data, setData] = useState("");
-  const [log, setLog] = useState<string[]>([]);
   const [result, setResult] = useState("");
+  const [log, setLog] = useState<string[]>([]);
 
   const handleCheck = () => {
     if (!tool) {
-      alert("Please select an AI tool first!");
+      alert("Select an AI tool first");
       return;
     }
 
     setLog((prev) => [...prev, tool]);
 
-    const lowerData = data.toLowerCase();
-    const match = knowledgeBase.find((item) =>
-      lowerData.includes(item.keyword)
-    );
+    const lower = data.toLowerCase();
+    const match = knowledgeBase.find((k) => lower.includes(k.keyword));
 
     if (match) {
-      setResult(
-        `⚠ Sensitive data detected!\nReason: ${match.reason}\nRecommendation: Do NOT share with AI tool.`
-      );
+      setResult(`⚠ Sensitive data detected\nReason: ${match.reason}`);
     } else {
-      setResult("✅ No sensitive data detected. Safe to continue sharing.");
+      setResult("✅ No sensitive data detected");
     }
 
     setData("");
   };
 
   return (
-    <div
-      style={{
-        backgroundColor: "#0B0B0B",
-        minHeight: "100vh",
-        padding: "40px",
-        fontFamily: "Arial",
-        color: "#F5F5F5",
-      }}
-    >
-      <h1 style={{ color: "#B11226", marginBottom: "30px" }}>
-        AI Security Monitor
-      </h1>
+    <div style={{padding:"40px"}}>
+      <h1 style={{color:"#7A0F1E"}}>AI Security Monitor</h1>
 
-      {/* Main Card */}
-      <div
-        style={{
-          backgroundColor: "#1A1A1A",
-          padding: "30px",
-          borderRadius: "10px",
-          maxWidth: "700px",
-          border: "1px solid #7A0F1E",
-        }}
-      >
+      <div style={{
+        background:"#1a1a1a",
+        padding:"25px",
+        borderRadius:"10px",
+        marginTop:"20px",
+        maxWidth:"600px"
+      }}>
+
         <h3>Select AI Tool</h3>
 
         <select
           value={tool}
-          onChange={(e) => setTool(e.target.value)}
-          style={{
-            padding: "10px",
-            width: "100%",
-            marginBottom: "20px",
-            backgroundColor: "#0B0B0B",
-            color: "white",
-            border: "1px solid #7A0F1E",
-          }}
+          onChange={(e)=>setTool(e.target.value)}
+          style={{width:"100%",padding:"10px"}}
         >
           <option value="">Select Tool</option>
           <option>ChatGPT</option>
@@ -85,78 +59,44 @@ export default function Home() {
           <option>Claude</option>
         </select>
 
-        <h3>Paste the data you plan to share</h3>
+        <h3 style={{marginTop:"20px"}}>Paste Data</h3>
 
         <textarea
-          rows={6}
+          rows={5}
           value={data}
-          onChange={(e) => setData(e.target.value)}
-          placeholder="Paste company data here..."
-          style={{
-            width: "100%",
-            padding: "12px",
-            backgroundColor: "#0B0B0B",
-            color: "white",
-            border: "1px solid #7A0F1E",
-            borderRadius: "5px",
-          }}
+          onChange={(e)=>setData(e.target.value)}
+          style={{width:"100%",padding:"10px"}}
         />
 
         <button
           onClick={handleCheck}
           style={{
-            marginTop: "20px",
-            padding: "12px 25px",
-            backgroundColor: "#7A0F1E",
-            border: "none",
-            color: "white",
-            cursor: "pointer",
-            borderRadius: "5px",
-            fontWeight: "bold",
+            marginTop:"20px",
+            padding:"10px 20px",
+            background:"#7A0F1E",
+            color:"white",
+            border:"none"
           }}
         >
           Analyze Risk
         </button>
 
         {result && (
-          <div
-            style={{
-              marginTop: "25px",
-              padding: "15px",
-              backgroundColor: "#0B0B0B",
-              border: "1px solid #B11226",
-              borderRadius: "6px",
-              whiteSpace: "pre-wrap",
-            }}
-          >
-            {result}
+          <div style={{marginTop:"20px"}}>
+            <strong>{result}</strong>
           </div>
         )}
+
       </div>
 
-      {/* Tool Log */}
-      <div
-        style={{
-          marginTop: "40px",
-          backgroundColor: "#1A1A1A",
-          padding: "20px",
-          borderRadius: "10px",
-          maxWidth: "700px",
-          border: "1px solid #7A0F1E",
-        }}
-      >
-        <h3 style={{ color: "#B11226" }}>AI Tools Used</h3>
+      <h3 style={{marginTop:"40px"}}>AI Tools Used</h3>
 
-        {log.length === 0 ? (
-          <p>No tools recorded yet.</p>
-        ) : (
-          <ul>
-            {log.map((t, i) => (
-              <li key={i}>{t}</li>
-            ))}
-          </ul>
-        )}
-      </div>
+      <ul>
+        {log.map((t,i)=>(
+          <li key={i}>{t}</li>
+        ))}
+      </ul>
+
     </div>
   );
 }
