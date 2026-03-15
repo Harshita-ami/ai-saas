@@ -1,102 +1,66 @@
-"use client";
-import { useState } from "react";
-
-const knowledgeBase = [
-  { keyword: "password", reason: "Passwords should never be shared." },
-  { keyword: "api key", reason: "API keys are sensitive." },
-  { keyword: "salary", reason: "Employee salary info is confidential." },
-  { keyword: "database", reason: "Company databases may contain private info." },
-];
+"use client"
+import { useState } from "react"
 
 export default function Home() {
-  const [tool, setTool] = useState("");
-  const [data, setData] = useState("");
-  const [result, setResult] = useState("");
-  const [log, setLog] = useState<string[]>([]);
 
-  const handleCheck = () => {
-    if (!tool) {
-      alert("Select an AI tool first");
-      return;
+  const [tool, setTool] = useState("")
+  const [text, setText] = useState("")
+  const [result, setResult] = useState("")
+
+  const detectRisk = () => {
+
+    const email = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z]{2,}\b/i
+    const creditCard = /\b(?:\d[ -]*?){13,16}\b/
+    const apiKey = /(sk-[a-zA-Z0-9]{20,})/
+    const password = /(password\s*[:=]\s*\S+)/i
+
+    if (password.test(text) || apiKey.test(text)) {
+      setResult("CRITICAL RISK ⚠️ Sensitive credential detected")
     }
-
-    setLog((prev) => [...prev, tool]);
-
-    const lower = data.toLowerCase();
-    const match = knowledgeBase.find((k) => lower.includes(k.keyword));
-
-    if (match) {
-      setResult(`⚠ Sensitive data detected\nReason: ${match.reason}`);
-    } else {
-      setResult("✅ No sensitive data detected");
+    else if (creditCard.test(text)) {
+      setResult("HIGH RISK ⚠️ Credit card detected")
     }
-
-    setData("");
-  };
+    else if (email.test(text)) {
+      setResult("MEDIUM RISK ⚠️ Email detected")
+    }
+    else {
+      setResult("LOW RISK ✅ No sensitive pattern detected")
+    }
+  }
 
   return (
-    <div style={{padding:"40px"}}>
-      <h1 style={{color:"#7A0F1E"}}>AI Security Monitor</h1>
+    <main className="container">
 
-      <div style={{
-        background:"#1a1a1a",
-        padding:"25px",
-        borderRadius:"10px",
-        marginTop:"20px",
-        maxWidth:"600px"
-      }}>
+      <h1>AI Security Monitor</h1>
 
-        <h3>Select AI Tool</h3>
+      <div className="card">
 
-        <select
-          value={tool}
-          onChange={(e)=>setTool(e.target.value)}
-          style={{width:"100%",padding:"10px"}}
-        >
-          <option value="">Select Tool</option>
+        <label>Select AI Tool</label>
+        <select onChange={(e)=>setTool(e.target.value)}>
+          <option>Select</option>
           <option>ChatGPT</option>
           <option>Gemini</option>
           <option>Claude</option>
+          <option>Copilot</option>
         </select>
 
-        <h3 style={{marginTop:"20px"}}>Paste Data</h3>
+        <label>Paste Data Shared with AI</label>
 
         <textarea
-          rows={5}
-          value={data}
-          onChange={(e)=>setData(e.target.value)}
-          style={{width:"100%",padding:"10px"}}
+          placeholder="Paste the data you shared with AI..."
+          onChange={(e)=>setText(e.target.value)}
         />
 
-        <button
-          onClick={handleCheck}
-          style={{
-            marginTop:"20px",
-            padding:"10px 20px",
-            background:"#7A0F1E",
-            color:"white",
-            border:"none"
-          }}
-        >
-          Analyze Risk
-        </button>
+        <button onClick={detectRisk}>Analyze Risk</button>
 
         {result && (
-          <div style={{marginTop:"20px"}}>
-            <strong>{result}</strong>
+          <div className="result">
+            {result}
           </div>
         )}
 
       </div>
 
-      <h3 style={{marginTop:"40px"}}>AI Tools Used</h3>
-
-      <ul>
-        {log.map((t,i)=>(
-          <li key={i}>{t}</li>
-        ))}
-      </ul>
-
-    </div>
-  );
+    </main>
+  )
 }
