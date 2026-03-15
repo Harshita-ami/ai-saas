@@ -28,6 +28,14 @@ export default function Home() {
     }
   }
 
+  const getBorderColor = () => {
+    if (result.includes("LOW")) return "5px solid green"
+    if (result.includes("MEDIUM")) return "5px solid orange"
+    if (result.includes("HIGH")) return "5px solid red"
+    if (result.includes("CRITICAL")) return "5px solid purple"
+    return "5px solid gray"
+  }
+
   return (
     <main className="container">
 
@@ -51,11 +59,22 @@ export default function Home() {
           onChange={(e)=>setText(e.target.value)}
         />
 
-        <button onClick={detectRisk}>Analyze Risk</button>
+        <button onClick={detectRisk}>
+          🔍 Analyze Risk
+        </button>
 
         {result && (
-          <div className="result">
-            {result}
+          <div
+            className="result"
+            style={{ borderLeft: getBorderColor() }}
+          >
+            <strong>{result}</strong>
+
+            {tool && (
+              <p style={{ marginTop: "10px", color: "#aaa" }}>
+                AI Tool Checked: {tool}
+              </p>
+            )}
           </div>
         )}
 
