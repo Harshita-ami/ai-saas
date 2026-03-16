@@ -6,6 +6,8 @@ export default function Home() {
   const [tool, setTool] = useState("")
   const [text, setText] = useState("")
   const [result, setResult] = useState("")
+  const [riskLevel, setRiskLevel] = useState("")
+  const [history, setHistory] = useState<any[]>([])
 
   const detectRisk = () => {
 
@@ -15,30 +17,45 @@ export default function Home() {
     const password = /(password\s*[:=]\s*\S+)/i
 
     let risk = ""
+    let level = ""
 
     if (password.test(text) || apiKey.test(text)) {
       risk = "CRITICAL RISK ⚠️ Sensitive credential detected"
+      level = "critical"
     }
     else if (creditCard.test(text)) {
       risk = "HIGH RISK ⚠️ Credit card detected"
+      level = "high"
     }
     else if (email.test(text)) {
       risk = "MEDIUM RISK ⚠️ Email detected"
+      level = "medium"
     }
     else {
       risk = "LOW RISK ✅ No sensitive pattern detected"
+      level = "low"
     }
 
     setResult(risk)
+    setRiskLevel(level)
+
+    const newEntry = {
+      tool: tool || "Unknown",
+      risk: risk,
+      time: new Date().toLocaleTimeString()
+    }
+
+    setHistory([newEntry, ...history])
   }
 
-  const getBorderColor = () => {
-    if (!result) return "5px solid gray"
-    if (result.includes("LOW")) return "5px solid green"
-    if (result.includes("MEDIUM")) return "5px solid orange"
-    if (result.includes("HIGH")) return "5px solid red"
-    if (result.includes("CRITICAL")) return "5px solid purple"
-    return "5px solid gray"
+  const getMeterStyle = () => {
+
+    if (riskLevel === "low") return { width: "25%", backgroundColor: "green" }
+    if (riskLevel === "medium") return { width: "50%", backgroundColor: "orange" }
+    if (riskLevel === "high") return { width: "75%", backgroundColor: "red" }
+    if (riskLevel === "critical") return { width: "100%", backgroundColor: "purple" }
+
+    return { width: "0%" }
   }
 
   return (
@@ -70,23 +87,54 @@ export default function Home() {
         </button>
 
         {result && (
-          <div
-            className="result"
-            style={{
-              borderLeft: getBorderColor(),
-              padding: "15px",
-              marginTop: "20px"
-            }}
-          >
+          <div style={{
+            marginTop: "20px",
+            padding: "15px",
+            borderLeft: "5px solid #888"
+          }}>
+
             <strong>{result}</strong>
 
-            {tool && (
-              <p style={{ marginTop: "10px", color: "#aaa" }}>
-                AI Tool Checked: {tool}
-              </p>
-            )}
+            <p style={{marginTop:"8px"}}>
+              Tool: {tool || "Not selected"}
+            </p>
+
+            <div style={{
+              marginTop: "15px",
+              height: "12px",
+              width: "100%",
+              background: "#333",
+              borderRadius: "8px"
+            }}>
+              <div style={{
+                height: "100%",
+                borderRadius: "8px",
+                transition: "0.4s",
+                ...getMeterStyle()
+              }}></div>
+            </div>
+
           </div>
         )}
+
+      </div>
+
+      {/* HISTORY SECTION */}
+
+      <div className="card" style={{marginTop:"30px"}}>
+
+        <h2>Recent Scans</h2>
+
+        {history.length === 0 && <p>No scans yet</p>}
+
+        {history.map((item, index) => (
+          <div key={index} style={{
+            padding:"10px",
+            borderBottom:"1px solid #333"
+          }}>
+            <strong>{item.tool}</strong> — {item.risk} — {item.time}
+          </div>
+        ))}
 
       </div>
 
