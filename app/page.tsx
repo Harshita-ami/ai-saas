@@ -14,27 +14,64 @@ export default function Home() {
 
     const email = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z]{2,}\b/i
     const creditCard = /\b(?:\d[ -]*?){13,16}\b/
+    const phone = /\b\d{10}\b/
+    const bankAccount = /\b\d{9,18}\b/
     const apiKey = /(sk-[a-zA-Z0-9]{20,})/
     const password = /(password\s*[:=]\s*\S+)/i
 
-    let risk = ""
-    let level = ""
+    const sensitiveKeywords = [
+      "confidential",
+      "financial report",
+      "bank account",
+      "customer data",
+      "employee id",
+      "ssn",
+      "private key"
+    ]
+
+    let detectedItems: string[] = []
+    let level = "low"
 
     if (password.test(text) || apiKey.test(text)) {
-      risk = "CRITICAL RISK ⚠️ Sensitive credential detected"
+      detectedItems.push("Sensitive credential")
       level = "critical"
     }
-    else if (creditCard.test(text)) {
-      risk = "HIGH RISK ⚠️ Credit card detected"
+
+    if (creditCard.test(text)) {
+      detectedItems.push("Credit Card Number")
       level = "high"
     }
-    else if (email.test(text)) {
-      risk = "MEDIUM RISK ⚠️ Email detected"
-      level = "medium"
+
+    if (bankAccount.test(text)) {
+      detectedItems.push("Possible Bank/Account Number")
+      if(level !== "critical") level = "high"
     }
-    else {
+
+    if (email.test(text)) {
+      detectedItems.push("Email Address")
+      if(level === "low") level = "medium"
+    }
+
+    if (phone.test(text)) {
+      detectedItems.push("Phone Number")
+      if(level === "low") level = "medium"
+    }
+
+    sensitiveKeywords.forEach(word => {
+      if(text.toLowerCase().includes(word)){
+        detectedItems.push(word)
+        if(level === "low") level = "medium"
+      }
+    })
+
+    let risk = ""
+
+    if(detectedItems.length === 0){
       risk = "LOW RISK ✅ No sensitive pattern detected"
       level = "low"
+    }
+    else{
+      risk = `${level.toUpperCase()} RISK ⚠️ Detected: ${detectedItems.join(", ")}`
     }
 
     setResult(risk)
@@ -143,8 +180,6 @@ export default function Home() {
         )}
 
       </div>
-
-      {/* HISTORY SECTION */}
 
       <div className="card" style={{marginTop:"30px"}}>
 
