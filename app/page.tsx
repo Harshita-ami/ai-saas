@@ -14,21 +14,26 @@ export default function Home() {
     const apiKey = /(sk-[a-zA-Z0-9]{20,})/
     const password = /(password\s*[:=]\s*\S+)/i
 
+    let risk = ""
+
     if (password.test(text) || apiKey.test(text)) {
-      setResult("CRITICAL RISK ⚠️ Sensitive credential detected")
+      risk = "CRITICAL RISK ⚠️ Sensitive credential detected"
     }
     else if (creditCard.test(text)) {
-      setResult("HIGH RISK ⚠️ Credit card detected")
+      risk = "HIGH RISK ⚠️ Credit card detected"
     }
     else if (email.test(text)) {
-      setResult("MEDIUM RISK ⚠️ Email detected")
+      risk = "MEDIUM RISK ⚠️ Email detected"
     }
     else {
-      setResult("LOW RISK ✅ No sensitive pattern detected")
+      risk = "LOW RISK ✅ No sensitive pattern detected"
     }
+
+    setResult(risk)
   }
 
   const getBorderColor = () => {
+    if (!result) return "5px solid gray"
     if (result.includes("LOW")) return "5px solid green"
     if (result.includes("MEDIUM")) return "5px solid orange"
     if (result.includes("HIGH")) return "5px solid red"
@@ -44,8 +49,8 @@ export default function Home() {
       <div className="card">
 
         <label>Select AI Tool</label>
-        <select onChange={(e)=>setTool(e.target.value)}>
-          <option>Select</option>
+        <select value={tool} onChange={(e)=>setTool(e.target.value)}>
+          <option value="">Select</option>
           <option>ChatGPT</option>
           <option>Gemini</option>
           <option>Claude</option>
@@ -55,6 +60,7 @@ export default function Home() {
         <label>Paste Data Shared with AI</label>
 
         <textarea
+          value={text}
           placeholder="Paste the data you shared with AI..."
           onChange={(e)=>setText(e.target.value)}
         />
@@ -66,7 +72,11 @@ export default function Home() {
         {result && (
           <div
             className="result"
-            style={{ borderLeft: getBorderColor() }}
+            style={{
+              borderLeft: getBorderColor(),
+              padding: "15px",
+              marginTop: "20px"
+            }}
           >
             <strong>{result}</strong>
 
