@@ -8,6 +8,7 @@ export default function Home() {
   const [result, setResult] = useState("")
   const [riskLevel, setRiskLevel] = useState("")
   const [history, setHistory] = useState<any[]>([])
+  const [scanCount, setScanCount] = useState(0)
 
   const detectRisk = () => {
 
@@ -46,6 +47,13 @@ export default function Home() {
     }
 
     setHistory([newEntry, ...history])
+    setScanCount(scanCount + 1)
+  }
+
+  const clearFields = () => {
+    setText("")
+    setResult("")
+    setRiskLevel("")
   }
 
   const getMeterStyle = () => {
@@ -62,6 +70,8 @@ export default function Home() {
     <main className="container">
 
       <h1>AI Security Monitor</h1>
+
+      <p style={{color:"#aaa"}}>Total Scans: {scanCount}</p>
 
       <div className="card">
 
@@ -82,9 +92,18 @@ export default function Home() {
           onChange={(e)=>setText(e.target.value)}
         />
 
-        <button onClick={detectRisk}>
-          🔍 Analyze Risk
-        </button>
+        <div style={{marginTop:"10px"}}>
+          <button onClick={detectRisk}>
+            🔍 Analyze Risk
+          </button>
+
+          <button 
+            onClick={clearFields}
+            style={{marginLeft:"10px"}}
+          >
+            🧹 Clear
+          </button>
+        </div>
 
         {result && (
           <div style={{
@@ -98,6 +117,12 @@ export default function Home() {
             <p style={{marginTop:"8px"}}>
               Tool: {tool || "Not selected"}
             </p>
+
+            {(riskLevel === "high" || riskLevel === "critical") && (
+              <p style={{color:"red", marginTop:"8px"}}>
+                ⚠️ Warning: Avoid sharing financial or credential data with AI tools.
+              </p>
+            )}
 
             <div style={{
               marginTop: "15px",
