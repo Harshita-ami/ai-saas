@@ -13,12 +13,13 @@ export default function Home() {
 
   const detectRisk = () => {
 
-    const email = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z]{2,}\b/gi
-    const creditCard = /\b(?:\d[ -]*?){13,16}\b/g
-    const phone = /(\+?\d{1,3}[- ]?)?\d{10}/g
-    const bankAccount = /\b\d{9,18}\b/g
-    const apiKey = /(sk-[a-zA-Z0-9]{10,})/g
-    const password = /(password\s*[:=]\s*\S+)/gi
+    // ❌ REMOVE /g from detection regex
+    const email = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z]{2,}\b/i
+    const creditCard = /\b(?:\d[ -]*?){13,16}\b/
+    const phone = /(\+?\d{1,3}[- ]?)?\d{10}/
+    const bankAccount = /\b\d{9,18}\b/
+    const apiKey = /(sk-[a-zA-Z0-9]{10,})/
+    const password = /(password\s*[:=]\s*\S+)/i
 
     const sensitiveKeywords = [
       "confidential","financial report","bank account",
@@ -29,20 +30,19 @@ export default function Home() {
     let level = "low"
     let highlighted = text
 
-    // 🔒 MASKING FUNCTIONS
-    const maskEmail = (email:any) => email.replace(/(.{1}).+(@.+)/, "$1****$2")
-    const maskCard = (card:any) => card.replace(/\d(?=\d{4})/g, "*")
-    const maskPhone = (num:any) => num.replace(/\d(?=\d{4})/g, "*")
-    const maskKey = (key:any) => key.slice(0,3) + "****" + key.slice(-3)
-    const maskPassword = () => "password: ******"
+    // 🔒 MASK FUNCTIONS
+    const maskEmail = (e:any) => e.replace(/(.{1}).+(@.+)/, "$1****$2")
+    const maskCard = (c:any) => c.replace(/\d(?=\d{4})/g, "*")
+    const maskPhone = (p:any) => p.replace(/\d(?=\d{4})/g, "*")
+    const maskKey = (k:any) => k.slice(0,3) + "****" + k.slice(-3)
+    const maskPassword = (match:any) => match.split(":")[0] + ": ******"
 
-    // 🔴 CRITICAL
+    // 🔍 DETECTION
     if (password.test(text) || apiKey.test(text)) {
       detectedItems.add("Sensitive credential")
       level = "critical"
     }
 
-    // 🔴 HIGH
     if (creditCard.test(text)) {
       detectedItems.add("Credit Card Number")
       if (level !== "critical") level = "high"
@@ -53,7 +53,6 @@ export default function Home() {
       if (level !== "critical") level = "high"
     }
 
-    // 🟠 MEDIUM
     if (email.test(text)) {
       detectedItems.add("Email Address")
       if (level === "low") level = "medium"
@@ -71,13 +70,13 @@ export default function Home() {
       }
     })
 
-    // 🔥 HIGHLIGHT + MASK
-    highlighted = highlighted.replace(email, m => `<mark>${maskEmail(m)}</mark>`)
-    highlighted = highlighted.replace(creditCard, m => `<mark>${maskCard(m)}</mark>`)
-    highlighted = highlighted.replace(phone, m => `<mark>${maskPhone(m)}</mark>`)
-    highlighted = highlighted.replace(bankAccount, m => `<mark>${maskCard(m)}</mark>`)
-    highlighted = highlighted.replace(apiKey, m => `<mark>${maskKey(m)}</mark>`)
-    highlighted = highlighted.replace(password, () => `<mark>${maskPassword()}</mark>`)
+    // ✅ USE FRESH REGEX WITH /g FOR REPLACE
+    highlighted = highlighted.replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z]{2,}\b/gi, m => `<mark>${maskEmail(m)}</mark>`)
+    highlighted = highlighted.replace(/\b(?:\d[ -]*?){13,16}\b/g, m => `<mark>${maskCard(m)}</mark>`)
+    highlighted = highlighted.replace(/(\+?\d{1,3}[- ]?)?\d{10}/g, m => `<mark>${maskPhone(m)}</mark>`)
+    highlighted = highlighted.replace(/\b\d{9,18}\b/g, m => `<mark>${maskCard(m)}</mark>`)
+    highlighted = highlighted.replace(/(sk-[a-zA-Z0-9]{10,})/g, m => `<mark>${maskKey(m)}</mark>`)
+    highlighted = highlighted.replace(/(password\s*[:=]\s*\S+)/gi, m => `<mark>${maskPassword(m)}</mark>`)
 
     sensitiveKeywords.forEach(word => {
       const regex = new RegExp(word, "gi")
@@ -163,8 +162,6 @@ ${text}
           <option>Copilot</option>
         </select>
 
-        <label>Paste Data Shared with AI</label>
-
         <textarea value={text} onChange={(e)=>setText(e.target.value)} />
 
         <div style={{marginTop:"10px"}}>
@@ -175,7 +172,6 @@ ${text}
 
         {result && (
           <div style={{marginTop:"20px", padding:"15px"}}>
-
             <strong>{result}</strong>
 
             <div style={{marginTop:"15px", height:"10px", background:"#333"}}>
