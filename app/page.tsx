@@ -9,15 +9,16 @@ export default function Home() {
   const [riskLevel, setRiskLevel] = useState("")
   const [history, setHistory] = useState<any[]>([])
   const [scanCount, setScanCount] = useState(0)
+  const [highlightedText, setHighlightedText] = useState("")
 
   const detectRisk = () => {
 
-    const email = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z]{2,}\b/i
-    const creditCard = /\b(?:\d[ -]*?){13,16}\b/
-    const phone = /\b\d{10}\b/
-    const bankAccount = /\b\d{9,18}\b/
-    const apiKey = /(sk-[a-zA-Z0-9]{20,})/
-    const password = /(password\s*[:=]\s*\S+)/i
+    const email = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z]{2,}\b/gi
+    const creditCard = /\b(?:\d[ -]*?){13,16}\b/g
+    const phone = /(\+?\d{1,3}[- ]?)?\d{10}/g
+    const bankAccount = /\b\d{9,18}\b/g
+    const apiKey = /(sk-[a-zA-Z0-9]{10,})/g
+    const password = /(password\s*[:=]\s*\S+)/gi
 
     const sensitiveKeywords = [
       "confidential",
@@ -29,57 +30,86 @@ export default function Home() {
       "private key"
     ]
 
-    let detectedItems: string[] = []
+    let detectedItems = new Set<string>()
     let level = "low"
+    let highlighted = text
 
+    // 🔴 CRITICAL
     if (password.test(text) || apiKey.test(text)) {
-      detectedItems.push("Sensitive credential")
+      detectedItems.add("Sensitive credential")
       level = "critical"
     }
 
+    // 🔴 HIGH
     if (creditCard.test(text)) {
-      detectedItems.push("Credit Card Number")
-      level = "high"
+      detectedItems.add("Credit Card Number")
+      if (level !== "critical") level = "high"
     }
 
-    if (bankAccount.test(text)) {
-      detectedItems.push("Possible Bank/Account Number")
-      if(level !== "critical") level = "high"
+    if (bankAccount.test(text) && !creditCard.test(text)) {
+      detectedItems.add("Possible Bank/Account Number")
+      if (level !== "critical") level = "high"
     }
 
+    // 🟠 MEDIUM
     if (email.test(text)) {
-      detectedItems.push("Email Address")
-      if(level === "low") level = "medium"
+      detectedItems.add("Email Address")
+      if (level === "low") level = "medium"
     }
 
     if (phone.test(text)) {
-      detectedItems.push("Phone Number")
-      if(level === "low") level = "medium"
+      detectedItems.add("Phone Number")
+      if (level === "low") level = "medium"
     }
 
     sensitiveKeywords.forEach(word => {
-      if(text.toLowerCase().includes(word)){
-        detectedItems.push(word)
-        if(level === "low") level = "medium"
+      const regex = new RegExp(word, "gi")
+      if (regex.test(text)) {
+        detectedItems.add(word)
+        if (level === "low") level = "medium"
       }
+    })
+
+    // 🔥 HIGHLIGHTING
+    const highlight = (regex: RegExp) => {
+      highlighted = highlighted.replace(regex, match => `<mark>${match}</mark>`)
+    }
+
+    highlight(email)
+    highlight(creditCard)
+    highlight(phone)
+    highlight(bankAccount)
+    highlight(apiKey)
+    highlight(password)
+
+    sensitiveKeywords.forEach(word => {
+      const regex = new RegExp(word, "gi")
+      highlight(regex)
     })
 
     let risk = ""
 
-    if(detectedItems.length === 0){
+    if (detectedItems.size === 0) {
       risk = "LOW RISK ✅ No sensitive pattern detected"
       level = "low"
-    }
-    else{
-      risk = `${level.toUpperCase()} RISK ⚠️ Detected: ${detectedItems.join(", ")}`
+    } else {
+      risk = `${level.toUpperCase()} RISK ⚠️ Detected: ${[...detectedItems].join(", ")}`
     }
 
-    setResult(risk)
+    // Risk Score
+    let score = 0
+    if (level === "low") score = 25
+    if (level === "medium") score = 50
+    if (level === "high") score = 75
+    if (level === "critical") score = 100
+
+    setResult(risk + ` | Risk Score: ${score}/100`)
     setRiskLevel(level)
+    setHighlightedText(highlighted)
 
     const newEntry = {
       tool: tool || "Unknown",
-      risk: risk,
+      risk: level.toUpperCase(),
       time: new Date().toLocaleTimeString()
     }
 
@@ -91,6 +121,7 @@ export default function Home() {
     setText("")
     setResult("")
     setRiskLevel("")
+    setHighlightedText("")
   }
 
   const getMeterStyle = () => {
@@ -106,9 +137,14 @@ export default function Home() {
   return (
     <main className="container">
 
-      <h1>AI Security Monitor</h1>
+      <h1>🛡️ AI Security Monitor</h1>
 
-      <p style={{color:"#aaa"}}>Total Scans: {scanCount}</p>
+      {/* DASHBOARD CARDS */}
+      <div style={{display:"flex", gap:"15px", marginBottom:"20px"}}>
+        <div className="card">📊 Total Scans: {scanCount}</div>
+        <div className="card">🧠 Last Tool: {tool || "None"}</div>
+        <div className="card">⚠️ Risk Level: {riskLevel || "N/A"}</div>
+      </div>
 
       <div className="card">
 
@@ -130,16 +166,8 @@ export default function Home() {
         />
 
         <div style={{marginTop:"10px"}}>
-          <button onClick={detectRisk}>
-            🔍 Analyze Risk
-          </button>
-
-          <button 
-            onClick={clearFields}
-            style={{marginLeft:"10px"}}
-          >
-            🧹 Clear
-          </button>
+          <button onClick={detectRisk}>🔍 Analyze Risk</button>
+          <button onClick={clearFields} style={{marginLeft:"10px"}}>🧹 Clear</button>
         </div>
 
         {result && (
@@ -176,6 +204,20 @@ export default function Home() {
               }}></div>
             </div>
 
+            {/* 🔥 HIGHLIGHTED OUTPUT */}
+            <div style={{
+              marginTop:"20px",
+              padding:"10px",
+              background:"#111",
+              borderRadius:"8px",
+              border:"1px solid #333"
+            }}>
+              <h3 style={{marginBottom:"10px"}}>🔎 Detected Sensitive Data</h3>
+              <div
+                dangerouslySetInnerHTML={{ __html: highlightedText }}
+              />
+            </div>
+
           </div>
         )}
 
@@ -183,7 +225,7 @@ export default function Home() {
 
       <div className="card" style={{marginTop:"30px"}}>
 
-        <h2>Recent Scans</h2>
+        <h2>📜 Recent Scans</h2>
 
         {history.length === 0 && <p>No scans yet</p>}
 
